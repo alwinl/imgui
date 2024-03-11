@@ -27,103 +27,11 @@
 
 #include "load_shaders.h"
 
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+#include "imgui_director.h"
 
-class ImGUIDirector
+void glfw_error_callback( int /*code*/, const char *description )
 {
-public:
-	ImGUIDirector( GLFWwindow *window );
-	~ImGUIDirector();
-
-	void render_gui();
-
-	std::tuple<float, float, float, float> get_background_colour() { return std::make_tuple(clear_color.x, clear_color.y,clear_color.z, clear_color.w); }
-
-private:
-    bool show_demo_window = false;
-    bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-	void make_hello_window();
-	void make_other_window();
-};
-
-ImGUIDirector::ImGUIDirector( GLFWwindow *window )
-{
-    const char* glsl_version = "#version 130";
-
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-
-    //ImGui::StyleColorsDark();
-    ImGui::StyleColorsLight();
-
-    ImGui_ImplGlfw_InitForOpenGL( window, true );
-    ImGui_ImplOpenGL3_Init( glsl_version );
-}
-
-ImGUIDirector::~ImGUIDirector()
-{
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-
-    ImGui::DestroyContext();
-}
-
-void ImGUIDirector::make_hello_window()
-{
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-    // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-	static float f = 0.0f;
-	static int counter = 0;
-
-	ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-	ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-	ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-	ImGui::Checkbox("Another Window", &show_another_window);
-
-	ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-	ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-	if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-		counter++;
-	ImGui::SameLine();
-	ImGui::Text("counter = %d", counter);
-
-	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-
-	ImGui::End();
-}
-
-void ImGUIDirector::make_other_window()
-{
-	ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-
-	ImGui::Text("Hello from another window!");
-	if (ImGui::Button("Close Me"))
-		show_another_window = false;
-
-	ImGui::End();
-}
-
-void ImGUIDirector::render_gui()
-{
-	ImGui_ImplOpenGL3_NewFrame();
-	ImGui_ImplGlfw_NewFrame();
-	ImGui::NewFrame();
-
-	make_hello_window();
-	if( show_another_window )
-		make_other_window();
-
-	ImGui::Render();
-	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	throw std::runtime_error( description );
 }
 
 class DemoApp
@@ -148,29 +56,48 @@ private:
 
 	unsigned int vao = -1;
 	GLFWwindow *window = nullptr;
+
+	void process_key( int key, int scancode, int action, int mods );
 };
 
 DemoApp::DemoApp( int /*argc*/, char ** /*argv*/ )
 {
+	glfwSetErrorCallback( glfw_error_callback );
+
+	/* Initialize the library */
 	if( glfwInit() == 0 )
 		throw std::runtime_error( "Cannot initialise GLFW" );
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+	glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
+	glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 3 );
+	glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 3 );
+	glfwWindowHint( GLFW_CLIENT_API, GLFW_OPENGL_API );
 
+	/* Create a windowed mode window and its OpenGL context */
 	window = glfwCreateWindow( 640, 480, "ImGUI demo", nullptr, nullptr );
 	if( window == nullptr ) {
 		glfwTerminate();
 		throw std::runtime_error( "Cannot create GLFW Window" );
 	}
 
+	/* Make the window's context current */
 	glfwMakeContextCurrent( window );
-    glfwSwapInterval(1);
+	glfwSwapInterval( 1 );
 
 	if( glewInit() != GLEW_OK )
 		throw std::runtime_error( "Cannot load GLEW" );
 
 	gui = std::make_unique<ImGUIDirector>( window );
+
+	glfwSetWindowUserPointer( window, this );
+
+	/* trunk-ignore(clang-tidy/bugprone-easily-swappable-parameters) */
+	auto key_callback = []( GLFWwindow *window, int key, int scancode, int action, int mods ) {
+		auto *app = static_cast<DemoApp *>( glfwGetWindowUserPointer( window ) );
+		app->process_key( key, scancode, action, mods );
+	};
+
+	glfwSetKeyCallback( window, key_callback );
 }
 
 DemoApp::~DemoApp()
@@ -179,6 +106,18 @@ DemoApp::~DemoApp()
 
     glfwDestroyWindow(window);
 	glfwTerminate();
+}
+
+void DemoApp::process_key( int key, int /*scancode*/, int action, int /*mods*/ )
+{
+	switch( action ) {
+	case GLFW_PRESS:
+		if( key == GLFW_KEY_ESCAPE )
+			glfwSetWindowShouldClose( window, 1 );
+		break;
+	case GLFW_RELEASE: // fall through
+	case GLFW_REPEAT: break;
+	}
 }
 
 void DemoApp::scene_setup()
@@ -208,7 +147,7 @@ void DemoApp::scene_setup()
 									 { { 0.0F, 1.0F, 0.0F }, { 0.0F, 1.0F, 0.0F } },
 									 { { 1.0F, -1.0F, 0.0F }, { 0.0F, 0.0F, 1.0F } } };
 
-	const unsigned int program_id = load_program( "../res/shaders/simple.glsl" );
+	const unsigned int program_id = load_program( "./build/res/shaders/simple.glsl" );
 	unsigned int vertex_buffer = -1;
 
 	glGenVertexArrays( 1, &vao );
