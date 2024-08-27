@@ -17,7 +17,7 @@
 # MA 02110-1301, USA.
 #
 
-add_executable(imgui_demo imgui_demo.cc load_shaders.cc)
+add_executable(imgui_demo imgui_demo.cc load_shaders.cc imgui_director.cc)
 
 target_include_directories( imgui_demo PRIVATE ${glfw_SOURCE_DIR}/include ${glew_SOURCE_DIR}/include )
 
