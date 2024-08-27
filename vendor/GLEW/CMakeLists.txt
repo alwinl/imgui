@@ -33,5 +33,5 @@ if(NOT glew_POPULATED)
   add_subdirectory(${glew_SOURCE_DIR} ${glew_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
-add_executable(glewinfo ${glew_SOURCE_DIR}/src/glewinfo.c)
-target_link_libraries(glewinfo PRIVATE libglew_static)
+#add_executable(glewinfo ${glew_SOURCE_DIR}/src/glewinfo.c)
+#target_link_libraries(glewinfo PRIVATE libglew_static)
