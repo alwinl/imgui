@@ -147,7 +147,7 @@ void DemoApp::scene_setup()
 									 { { 0.0F, 1.0F, 0.0F }, { 0.0F, 1.0F, 0.0F } },
 									 { { 1.0F, -1.0F, 0.0F }, { 0.0F, 0.0F, 1.0F } } };
 
-	const unsigned int program_id = load_program( "./build/res/shaders/simple.glsl" );
+	const unsigned int program_id = load_program( "../res/shaders/simple.glsl" );
 	unsigned int vertex_buffer = -1;
 
 	glGenVertexArrays( 1, &vao );
