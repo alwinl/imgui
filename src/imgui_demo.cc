@@ -194,12 +194,12 @@ void DemoApp::loop()
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
 
-		std::tuple<float, float, float, float> bg_colour = gui->get_background_colour();
+		auto [red, green, blue, alpha] = gui->get_background_colour();
         glClearColor(
-			std::get<0>(bg_colour) * std::get<3>(bg_colour),
-			std::get<1>(bg_colour) * std::get<3>(bg_colour),
-			std::get<2>(bg_colour) * std::get<3>(bg_colour),
-			std::get<3>(bg_colour)
+			red * alpha,
+			green * alpha,
+			blue * alpha,
+			alpha
 		);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
