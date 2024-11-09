@@ -26,8 +26,13 @@ ImGUIDirector::ImGUIDirector( GLFWwindow *window )
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
-    //ImGui::StyleColorsDark();
-    ImGui::StyleColorsLight();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+    ImGui::StyleColorsDark();
+    // ImGui::StyleColorsLight();
 
     ImGui_ImplGlfw_InitForOpenGL( window, true );
     ImGui_ImplOpenGL3_Init( glsl_version );
@@ -44,8 +49,6 @@ ImGUIDirector::~ImGUIDirector()
 void ImGUIDirector::make_hello_window()
 {
     ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
 	static float f = 0.0f;
@@ -58,7 +61,7 @@ void ImGUIDirector::make_hello_window()
 	ImGui::Checkbox("Another Window", &show_another_window);
 
 	ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-	ImGui::ColorEdit4("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+	ImGui::ColorEdit4("clear color", (float*)&clear_color); // Edit 4 floats representing a color
 
 	if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
 		counter++;

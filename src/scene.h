@@ -1,5 +1,5 @@
 /*
- * imgui_director.h Copyright 2024 Alwin Leerling dna.leerling@gmail.com
+ * scene.h Copyright 2024 Alwin Leerling dna.leerling@gmail.com
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,31 +17,18 @@
  * MA 02110-1301, USA.
  */
 
-#pragma once
+#include <array>
 
-#include <tuple>
-
-#include "imgui.h"
-#include "imgui_impl_allegro5.h"
-#include "imgui_impl_opengl3.h"
-
-class ImGUIDirector
+class DemoScene
 {
 public:
-	ImGUIDirector( ALLEGRO_DISPLAY *window );
-	~ImGUIDirector();
+	void make_scene();
+	void render_scene( int width, int height ) const;
 
-	void render_gui();
-	void change_size();
-
-	std::tuple<float, float, float, float> get_background_colour() { return std::make_tuple(clear_color.x, clear_color.y,clear_color.z, clear_color.w); }
+	void set_background( float red, float green, float blue, float aplha );
 
 private:
-    bool show_demo_window = false;
-    bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-	void make_hello_window();
-	void make_other_window();
+	unsigned int vao;
+	unsigned int program_id;
+	std::array<float,4> background;
 };
-

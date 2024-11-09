@@ -19,7 +19,7 @@
 
 #include "imgui_director_allegro.h"
 
-ImGUIDirector::ImGUIDirector( ALLEGRO_DISPLAY *window ) : window(window)
+ImGUIDirector::ImGUIDirector( ALLEGRO_DISPLAY *window )
 {
     const char* glsl_version = "#version 130";
 
@@ -92,6 +92,7 @@ void ImGUIDirector::render_gui()
 		make_other_window();
 
 	ImGui::Render();
+
 	ImGui_ImplAllegro5_RenderDrawData(ImGui::GetDrawData());
 }
 

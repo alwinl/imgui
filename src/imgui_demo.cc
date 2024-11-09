@@ -25,14 +25,9 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "load_shaders.h"
+#include "scene.h"
 
 #include "imgui_director.h"
-
-void glfw_error_callback( int /*code*/, const char *description )
-{
-	throw std::runtime_error( description );
-}
 
 class DemoApp
 {
@@ -45,23 +40,20 @@ public:
 	DemoApp &operator=( DemoApp & ) = delete;
 	DemoApp &operator=( DemoApp && ) = delete;
 
-	int run();
+	void run();
 
 private:
-	void scene_setup();
-	void loop();
-	void scene_render() const;
-
-	std::unique_ptr<ImGUIDirector> gui;
-
-	unsigned int vao = -1;
 	GLFWwindow *window = nullptr;
+	DemoScene scene;
+	std::unique_ptr<ImGUIDirector> gui;
 
 	void process_key( int key, int scancode, int action, int mods );
 };
 
 DemoApp::DemoApp( int /*argc*/, char ** /*argv*/ )
 {
+	auto glfw_error_callback = []( int /*code*/, const char *description ) { throw std::runtime_error( description ); };
+
 	glfwSetErrorCallback( glfw_error_callback );
 
 	/* Initialize the library */
@@ -87,8 +79,6 @@ DemoApp::DemoApp( int /*argc*/, char ** /*argv*/ )
 	if( glewInit() != GLEW_OK )
 		throw std::runtime_error( "Cannot load GLEW" );
 
-	gui = std::make_unique<ImGUIDirector>( window );
-
 	glfwSetWindowUserPointer( window, this );
 
 	/* trunk-ignore(clang-tidy/bugprone-easily-swappable-parameters) */
@@ -98,6 +88,8 @@ DemoApp::DemoApp( int /*argc*/, char ** /*argv*/ )
 	};
 
 	glfwSetKeyCallback( window, key_callback );
+
+	gui = std::make_unique<ImGUIDirector>( window );
 }
 
 DemoApp::~DemoApp()
@@ -120,68 +112,10 @@ void DemoApp::process_key( int key, int /*scancode*/, int action, int /*mods*/ )
 	}
 }
 
-void DemoApp::scene_setup()
+void DemoApp::run()
 {
-	constexpr unsigned int position_index = 0;
-	constexpr unsigned int colour_index = 1;
+	scene.make_scene();
 
-	struct vertex {
-		std::array<float, 3> position;
-		std::array<float, 3> colour;
-	};
-
-	struct attribute_description {
-		unsigned int index;
-		int component_count;
-		unsigned int component_type;
-		unsigned char is_normalized;
-		size_t offset;
-	};
-
-	const std::vector<attribute_description> vertex_description = {
-		{ position_index, 3, GL_FLOAT, GL_FALSE, offsetof( vertex, position ) }, // position attribute
-		{ colour_index, 3, GL_FLOAT, GL_FALSE, offsetof( vertex, colour ) }		 // colour attribute
-	};
-
-	std::vector<vertex> vertices = { { { -1.0F, -1.0F, 0.0F }, { 1.0F, 0.0F, 0.0F } },
-									 { { 0.0F, 1.0F, 0.0F }, { 0.0F, 1.0F, 0.0F } },
-									 { { 1.0F, -1.0F, 0.0F }, { 0.0F, 0.0F, 1.0F } } };
-
-	const unsigned int program_id = load_program( "../res/shaders/simple.glsl" );
-	unsigned int vertex_buffer = -1;
-
-	glGenVertexArrays( 1, &vao );
-	glBindVertexArray( vao );
-
-	glGenBuffers( 1, &vertex_buffer );
-	glBindBuffer( GL_ARRAY_BUFFER, vertex_buffer );
-	glBufferData( GL_ARRAY_BUFFER, static_cast<int64_t>( vertices.size() * sizeof( vertex ) ), vertices.data(),
-				  GL_STATIC_DRAW );
-
-	for( const auto &attribute : vertex_description ) {
-		glEnableVertexAttribArray( attribute.index );
-		glVertexAttribPointer( attribute.index, attribute.component_count, attribute.component_type,
-							   attribute.is_normalized, sizeof( vertex ),
-							   /* trunk-ignore(clang-tidy/cppcoreguidelines-pro-type-reinterpret-cast) */
-							   /* trunk-ignore(clang-tidy/performance-no-int-to-ptr) */
-							   reinterpret_cast<const void *>( attribute.offset ) );
-	}
-
-	glUseProgram( program_id );
-
-	glBindVertexArray( 0 );
-}
-
-void DemoApp::scene_render() const
-{
-	glBindVertexArray( vao );
-
-	glDrawArrays( GL_TRIANGLES, 0, 3 );
-}
-
-void DemoApp::loop()
-{
-	/* Loop until the user closes the window */
 	while( glfwWindowShouldClose( window ) == 0 ) {
 
 		/* Get input */
@@ -192,18 +126,12 @@ void DemoApp::loop()
 		/* Render graphics */
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
-        glViewport(0, 0, display_w, display_h);
 
 		auto [red, green, blue, alpha] = gui->get_background_colour();
-        glClearColor(
-			red * alpha,
-			green * alpha,
-			blue * alpha,
-			alpha
-		);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-		scene_render();
+		scene.set_background( red, green, blue, alpha );
+
+		scene.render_scene( display_w, display_h );
 
 		gui->render_gui();
 
@@ -211,17 +139,8 @@ void DemoApp::loop()
 	}
 }
 
-int DemoApp::run()
-{
-	scene_setup();
-
-	loop();
-
-	return 0;
-}
-
 int main( int argc, char **argv )
 {
-	return DemoApp( argc, argv ).run();
+	DemoApp( argc, argv ).run();
 }
 

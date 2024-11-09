@@ -22,7 +22,7 @@ include(FetchContent)
 FetchContent_Declare(
   imgui
   GIT_REPOSITORY https://github.com/ocornut/imgui.git
-  GIT_TAG        origin/master
+  GIT_TAG        origin/docking
 )
 
 FetchContent_GetProperties(imgui)
