@@ -25,13 +25,14 @@ FetchContent_Declare(
   GIT_TAG        origin/docking
 )
 
-FetchContent_GetProperties(imgui)
+FetchContent_MakeAvailable(imgui)
+# FetchContent_GetProperties(imgui)
 
-if(NOT imgui_POPULATED)
-  FetchContent_Populate(imgui)
+# if(NOT imgui_POPULATED)
+#   FetchContent_Populate(imgui)
 
-  #add_subdirectory(${imgui_SOURCE_DIR} ${imgui_BINARY_DIR} EXCLUDE_FROM_ALL)
-endif()
+#   #add_subdirectory(${imgui_SOURCE_DIR} ${imgui_BINARY_DIR} EXCLUDE_FROM_ALL)
+# endif()
 
 add_library( ImGui STATIC
   ${imgui_SOURCE_DIR}/imgui.cpp
